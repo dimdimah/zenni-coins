@@ -7,7 +7,7 @@ import {
   LogOut,
   Settings,
   User,
-  LayoutDashboard,
+  ReceiptText,
   Tag,
   Wallet,
   BarChart2,
@@ -34,7 +34,7 @@ const NAV_ITEMS_LEFT = [
 
 const NAV_ITEMS_RIGHT = [
   { href: "/categories", label: "Kategori", icon: Tag },
-  { href: "/reports", label: "Laporan", icon: BarChart2 },
+  { href: "/reports", label: "Laporan", icon: ReceiptText  },
 ];
 
 const ALL_NAV_ITEMS = [...NAV_ITEMS_LEFT, ...NAV_ITEMS_RIGHT];

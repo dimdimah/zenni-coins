@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Category } from "@/lib/types";
 import { Delete, CheckCheck, Calendar } from "lucide-react";
-import { ReceiptScanner } from "./ReceiptScanner";
+import { ReceiptScanner, ScanResult } from "./ReceiptScanner";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -60,7 +60,6 @@ export default function TransactionFormContent({
   onSuccess?: () => void;
 }) {
   const { data: categories } = useSWR<Category[]>("/api/categories", fetcher);
-  const { toast } = useToast();
 
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("0");
@@ -69,6 +68,7 @@ export default function TransactionFormContent({
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [scanHighlight, setScanHighlight] = useState(false);
 
   const visibleCategories =
     (type === "expense"
@@ -83,15 +83,52 @@ export default function TransactionFormContent({
     setAmount((p) => (p === "0" ? key : p.length >= 12 ? p : p + key));
   };
 
+  const handleScanComplete = (result: ScanResult) => {
+    if (result.amount && result.amount !== "0") {
+      setAmount(result.amount);
+    }
+
+    if (result.date) {
+      setDate(result.date);
+    }
+
+    const notesText = [result.merchant, result.notes]
+      .filter(Boolean)
+      .join(" — ");
+    if (notesText) setNotes(notesText);
+
+    if (result.category && categories) {
+      const matched = categories.find(
+        (c) =>
+          c.type === "expense" &&
+          c.name.toLowerCase().includes(result.category.toLowerCase())
+      );
+      if (matched) {
+        setCategoryId(matched.id);
+        setType("expense");
+      }
+    }
+
+    setScanHighlight(true);
+    setTimeout(() => setScanHighlight(false), 1500);
+
+    toast.success("Struk berhasil dibaca! 🎉", {
+      description: `Rp ${parseInt(result.amount || "0").toLocaleString("id-ID")} dari ${result.merchant || "merchant"}`,
+    });
+  };
+
   const handleSubmit = async () => {
     if (!categoryId || !amount || amount === "0") {
-      return toast({
-        title: "Error",
+      toast.error("Lengkapi form dulu ya!", {
         description: "Pilih kategori dan masukkan jumlah",
-        variant: "destructive",
       });
+      return;
     }
+
     setIsLoading(true);
+
+    const toastId = toast.loading("Menyimpan transaksi...");
+
     try {
       const res = await fetch("/api/transactions", {
         method: "POST",
@@ -104,8 +141,14 @@ export default function TransactionFormContent({
           date,
         }),
       });
+
       if (!res.ok) throw new Error();
-      toast({ title: "Berhasil", description: "Transaksi ditambahkan" });
+
+      toast.success("Transaksi ditambahkan! ✅", {
+        id: toastId,
+        description: `Rp ${formatRupiah(amount)} berhasil disimpan`,
+      });
+
       setAmount("0");
       setCategoryId("");
       setNotes("");
@@ -115,17 +158,15 @@ export default function TransactionFormContent({
       });
       onSuccess?.();
     } catch {
-      toast({
-        title: "Error",
-        description: "Gagal menyimpan",
-        variant: "destructive",
+      toast.error("Gagal menyimpan transaksi", {
+        id: toastId,
+        description: "Coba lagi beberapa saat ya",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 4 kolom, baris terakhir: 0, 000, (kosong), ✓
   const numpadRows = [
     ["AC", "×", "÷", "⌫"],
     ["7", "8", "9", "-"],
@@ -135,7 +176,11 @@ export default function TransactionFormContent({
   ];
 
   return (
-    <div className="flex flex-col gap-3 px-4 pb-6 overflow-y-auto">
+    <div
+      className={`flex flex-col gap-3 px-4 pb-6 overflow-y-auto transition-all duration-300 ${
+        scanHighlight ? "bg-emerald-50/60 rounded-2xl" : ""
+      }`}
+    >
       {/* TYPE TOGGLE */}
       <div className="flex rounded-xl overflow-hidden border border-slate-200">
         {(["expense", "income"] as const).map((t) => (
@@ -159,7 +204,7 @@ export default function TransactionFormContent({
       </div>
 
       {/* AMOUNT */}
-      <div className="text-center py-1">
+      <div className={`text-center py-1 rounded-xl transition-all ${scanHighlight ? "bg-emerald-100/60" : ""}`}>
         <p className="text-slate-400 text-xs mb-0.5">Rp</p>
         <p className="text-4xl font-bold text-slate-900 tracking-tight">
           {formatRupiah(amount)}
@@ -221,7 +266,7 @@ export default function TransactionFormContent({
         />
       </div>
 
-      {/* NUMPAD — 4 kolom, tombol ✓ span 2 baris */}
+      {/* NUMPAD */}
       <div className="grid grid-cols-4 gap-2">
         {numpadRows.map((row, ri) =>
           row.map((key, ki) => {
@@ -266,7 +311,7 @@ export default function TransactionFormContent({
       </div>
 
       {/* RECEIPT SCANNER */}
-      <ReceiptScanner onScanComplete={() => {}} />
+      <ReceiptScanner onScanComplete={handleScanComplete} />
     </div>
   );
 }

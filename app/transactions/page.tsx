@@ -62,15 +62,6 @@ export default function TransactionsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="px-4 py-8 max-w-7xl mx-auto">
-        {/* Header */}
-        {/* <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Transaksi</h1>
-            <p className="text-muted-foreground">Kelola transaksi pemasukan dan pengeluaran Anda</p>
-          </div>
-          <TransactionForm />
-        </div> */}
-
         {/* Transactions List */}
         {!txLoading && transactions && transactions.length > 0 ? (
           <Card>

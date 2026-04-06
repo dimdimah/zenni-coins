@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/formatting";
 import { Transaction } from "@/lib/types";
+import { exportPDFClient } from "@/lib/utils/exportPDF";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -28,10 +29,18 @@ const MONTHS = [
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
 
+type ExportFormat = "excel" | "pdf-client" | "pdf-server";
+
+const FORMAT_OPTIONS: { key: ExportFormat; labelShort: string; labelLong: string }[] = [
+  { key: "excel",      labelShort: "Excel",   labelLong: "Excel"   },
+  { key: "pdf-client", labelShort: "PDF ⚡",  labelLong: "PDF cepat" },
+  { key: "pdf-server", labelShort: "PDF ☁️",  labelLong: "PDF server"      },
+];
+
 export default function ReportsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("excel");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isExporting, setIsExporting] = useState(false);
   const router = useRouter();
@@ -67,35 +76,58 @@ export default function ReportsPage() {
   );
 
   const handleExport = async () => {
+    // ── PDF client-side — generate di browser, no server call ──
+    if (exportFormat === "pdf-client") {
+      if (!transactions || transactions.length === 0) {
+        return toast({
+          title: "Tidak ada data",
+          description: "Belum ada transaksi bulan ini",
+          variant: "destructive",
+        });
+      }
+      exportPDFClient(transactions, selectedMonth, monthLabel);
+      toast({ title: "Berhasil! 🎉", description: "PDF diunduh langsung dari browser" });
+      return;
+    }
+
+    // ── Excel & PDF server-side ──
     setIsExporting(true);
     try {
+      const format = exportFormat === "pdf-server" ? "pdf-server" : "excel";
+      const ext    = exportFormat === "pdf-server" ? "pdf" : "xlsx";
       const response = await fetch(
-        `/api/reports/export?format=${exportFormat}&month=${selectedMonth}`,
+        `/api/reports/export?format=${format}&month=${selectedMonth}`,
       );
       if (!response.ok) throw new Error();
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `laporan-keuangan-${selectedMonth}.${exportFormat}`;
+      const url  = window.URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `laporan-keuangan-${selectedMonth}.${ext}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast({
         title: "Berhasil! 🎉",
-        description: `Laporan diunduh sebagai ${exportFormat.toUpperCase()}`,
+        description: `Laporan diunduh sebagai ${ext.toUpperCase()}`,
       });
     } catch {
-      toast({
-        title: "Gagal mengunduh",
-        description: "Coba lagi ya!",
-        variant: "destructive",
-      });
+      toast({ title: "Gagal mengunduh", description: "Coba lagi ya!", variant: "destructive" });
     } finally {
       setIsExporting(false);
     }
   };
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+  transactions?.forEach((tx) => {
+    const amount = parseFloat(tx.amount as unknown as string);
+    if (tx.type === "income") totalIncome += amount;
+    else totalExpense += amount;
+  });
+  const balance = totalIncome - totalExpense;
+  const isSurplus = balance >= 0;
 
   if (isLoading) {
     return (
@@ -110,50 +142,43 @@ export default function ReportsPage() {
 
   if (!isAuthenticated) return null;
 
-  let totalIncome = 0;
-  let totalExpense = 0;
-  transactions?.forEach((tx) => {
-    const amount = parseFloat(tx.amount as unknown as string);
-    if (tx.type === "income") totalIncome += amount;
-    else totalExpense += amount;
-  });
-  const balance = totalIncome - totalExpense;
-  const isSurplus = balance >= 0;
-
   return (
-    // ─── page shell ───────────────────────────────────────────────
     <div className="min-h-screen bg-amber-50">
-
-      {/* ══════════════════════════════════════════
-          HEADER  — warm amber, friendly vibe
-      ══════════════════════════════════════════ */}
       <div
         className="px-5 pt-7 pb-8 md:rounded-b-3xl"
         style={{ background: "linear-gradient(135deg, #F5A623 0%, #F7B733 60%, #FCCD5A 100%)" }}
       >
         <div className="max-w-5xl mx-auto">
 
-          {/* Title row — export buttons DESKTOP only (md+) */}
+          {/* Title row + desktop export */}
           <div className="flex items-start justify-between mb-5">
             <div>
               <h1 className="text-gray-900 text-xl font-extrabold tracking-tight">
                 Laporan Keuangan
               </h1>
-              <p className="text-amber-800/60 text-xs mt-0.5">
-                Analisis keuangan bulanan
-              </p>
+              <p className="text-amber-800/60 text-xs mt-0.5">Analisis keuangan bulanan</p>
             </div>
 
-            {/* ── Desktop export — pojok kanan atas ── */}
+            {/* Desktop export */}
             <div className="hidden md:flex items-center gap-2">
-              <select
-                value={exportFormat}
-                onChange={(e) => setExportFormat(e.target.value as "csv" | "json")}
-                className="text-xs bg-white/30 text-gray-800 border border-white/40 rounded-xl px-3 py-2 outline-none font-semibold backdrop-blur-sm cursor-pointer hover:bg-white/50 transition-colors"
-              >
-                <option value="csv">CSV</option>
-                <option value="json">JSON</option>
-              </select>
+              {/* Format toggle pill */}
+              <div className="flex rounded-xl overflow-hidden border border-white/40 bg-white/20">
+                {FORMAT_OPTIONS.map((fmt) => (
+                  <button
+                    key={fmt.key}
+                    onClick={() => setExportFormat(fmt.key)}
+                    title={fmt.labelLong}
+                    className={`px-3 py-2 text-xs font-semibold transition-colors ${
+                      exportFormat === fmt.key
+                        ? "bg-gray-900 text-white"
+                        : "text-gray-800 hover:bg-white/30"
+                    }`}
+                  >
+                    {fmt.labelShort}
+                  </button>
+                ))}
+              </div>
+
               <button
                 onClick={handleExport}
                 disabled={isExporting}
@@ -186,7 +211,6 @@ export default function ReportsPage() {
 
           {/* Stats cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {/* Pemasukan */}
             <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
                 Pemasukan
@@ -199,7 +223,6 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            {/* Pengeluaran */}
             <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
                 Pengeluaran
@@ -212,7 +235,6 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            {/* Saldo — spans full width on mobile, 1 col on desktop */}
             <div className="col-span-2 md:col-span-1 bg-gray-900 rounded-2xl p-3.5 border border-gray-800 flex items-center justify-between md:block">
               <div>
                 <p className="text-amber-400/70 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
@@ -222,13 +244,9 @@ export default function ReportsPage() {
                   {formatCurrency(balance)}
                 </p>
               </div>
-              <span
-                className={`text-[10px] font-bold px-2.5 py-1 rounded-full mt-1 inline-block ${
-                  isSurplus
-                    ? "bg-amber-400/20 text-amber-400"
-                    : "bg-red-400/20 text-red-400"
-                }`}
-              >
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full mt-1 inline-block ${
+                isSurplus ? "bg-amber-400/20 text-amber-400" : "bg-red-400/20 text-red-400"
+              }`}>
                 {isSurplus ? "Surplus" : "Defisit"}
               </span>
             </div>
@@ -240,7 +258,6 @@ export default function ReportsPage() {
           CONTENT
       ══════════════════════════════════════════ */}
       <div className="max-w-5xl mx-auto px-4 pt-5 pb-52 md:pb-10 space-y-4">
-
         {txLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="w-8 h-8 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
@@ -258,49 +275,40 @@ export default function ReportsPage() {
               </span>
             </div>
 
-            {/* ── Mobile list ── */}
+            {/* Mobile list */}
             <div className="divide-y divide-amber-50 md:hidden">
               {transactions.map((tx) => (
                 <div
                   key={tx.id}
                   className="flex items-center gap-3 px-4 py-3.5 hover:bg-amber-50/40 transition-colors"
                 >
-                  <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                      tx.type === "income"
-                        ? "bg-emerald-100"
-                        : "bg-amber-100"
-                    }`}
-                  >
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                    tx.type === "income" ? "bg-emerald-100" : "bg-amber-100"
+                  }`}>
                     {tx.type === "income"
                       ? <TrendingUp className="w-4 h-4 text-emerald-600" />
-                      : <TrendingDown className="w-4 h-4 text-amber-600" />
-                    }
+                      : <TrendingDown className="w-4 h-4 text-amber-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-gray-800 font-semibold text-sm truncate">
-                      {tx.category?.name || "Unknown"}
+                      {(tx as any).category?.name || "Unknown"}
                     </p>
                     <p className="text-gray-400 text-xs mt-0.5">
                       {new Date(tx.date).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
+                        day: "numeric", month: "short", year: "numeric",
                       })}
                     </p>
                   </div>
-                  <div
-                    className={`text-sm font-bold shrink-0 ${
-                      tx.type === "income" ? "text-emerald-600" : "text-gray-800"
-                    }`}
-                  >
+                  <div className={`text-sm font-bold shrink-0 ${
+                    tx.type === "income" ? "text-emerald-600" : "text-gray-800"
+                  }`}>
                     {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* ── Desktop table ── */}
+            {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -316,30 +324,24 @@ export default function ReportsPage() {
                     <tr key={tx.id} className="hover:bg-amber-50/30 transition-colors">
                       <td className="py-3.5 px-4 text-gray-500 text-xs">
                         {new Date(tx.date).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
+                          day: "numeric", month: "long", year: "numeric",
                         })}
                       </td>
                       <td className="py-3.5 px-4 text-gray-800 font-semibold text-xs">
-                        {tx.category?.name || "Unknown"}
+                        {(tx as any).category?.name || "Unknown"}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            tx.type === "income"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-amber-100 text-amber-700"
-                          }`}
-                        >
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          tx.type === "income"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}>
                           {tx.type === "income" ? "Pemasukan" : "Pengeluaran"}
                         </span>
                       </td>
-                      <td
-                        className={`py-3.5 px-4 text-right font-bold text-xs ${
-                          tx.type === "income" ? "text-emerald-600" : "text-gray-800"
-                        }`}
-                      >
+                      <td className={`py-3.5 px-4 text-right font-bold text-xs ${
+                        tx.type === "income" ? "text-emerald-600" : "text-gray-800"
+                      }`}>
                         {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
                       </td>
                     </tr>
@@ -354,43 +356,39 @@ export default function ReportsPage() {
               <FileText className="w-7 h-7 text-amber-500" />
             </div>
             <p className="text-gray-800 font-bold text-sm mb-1">Belum ada data nih</p>
-            <p className="text-gray-400 text-xs">
-              Belum ada transaksi di bulan {monthLabel}
-            </p>
+            <p className="text-gray-400 text-xs">Belum ada transaksi di bulan {monthLabel}</p>
           </div>
         )}
       </div>
 
       {/* ══════════════════════════════════════════
           MOBILE EXPORT BAR
-          — muncul di bawah, thumb-friendly
-          — disembunyikan di desktop (md:hidden)
       ══════════════════════════════════════════ */}
       <div className="md:hidden fixed bottom-20 left-0 right-0 z-40">
-        {/* subtle blur backdrop */}
         <div className="bg-white/90 backdrop-blur-md border-t border-amber-100 px-4 pt-3 pb-3 shadow-[0_-4px_24px_rgba(245,166,35,0.12)]">
           <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-2.5 text-center">
             Ekspor Laporan
           </p>
           <div className="flex gap-2">
-            {/* Format toggle — pill style */}
+            {/* Format toggle */}
             <div className="flex rounded-xl overflow-hidden border border-amber-200 bg-amber-50">
-              {(["csv", "json"] as const).map((fmt) => (
+              {FORMAT_OPTIONS.map((fmt) => (
                 <button
-                  key={fmt}
-                  onClick={() => setExportFormat(fmt)}
-                  className={`px-4 py-2.5 text-xs font-bold transition-colors ${
-                    exportFormat === fmt
+                  key={fmt.key}
+                  onClick={() => setExportFormat(fmt.key)}
+                  title={fmt.labelLong}
+                  className={`px-3 py-2.5 text-xs font-bold transition-colors ${
+                    exportFormat === fmt.key
                       ? "bg-amber-400 text-gray-900"
                       : "text-amber-700 hover:bg-amber-100"
                   }`}
                 >
-                  {fmt.toUpperCase()}
+                  {fmt.labelShort}
                 </button>
               ))}
             </div>
 
-            {/* Download button — takes remaining space */}
+            {/* Download button */}
             <button
               onClick={handleExport}
               disabled={isExporting}
@@ -399,7 +397,7 @@ export default function ReportsPage() {
               {isExporting
                 ? <Loader2 className="w-4 h-4 animate-spin" />
                 : <Download className="w-4 h-4" />}
-              Unduh {exportFormat.toUpperCase()}
+              Unduh
             </button>
           </div>
         </div>
