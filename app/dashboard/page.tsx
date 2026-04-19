@@ -9,7 +9,6 @@ import Link from "next/link";
 import { formatCurrency, formatShortDate } from "@/lib/utils/formatting";
 import { DashboardStats, Transaction } from "@/lib/types";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { TestingSection } from "@/components/dashboard/TestingSection";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -127,27 +126,27 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
+            <div className="glass rounded-2xl p-3.5">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase mb-1.5">Pengeluaran</p>
               <p className="text-gray-900 text-xl font-extrabold">
                 {stats ? formatCurrency(stats.totalExpense) : "Rp 0"}
               </p>
             </div>
-            <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
+            <div className="glass rounded-2xl p-3.5">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase mb-1.5">Pemasukan</p>
               <p className="text-gray-900 text-xl font-extrabold">
                 {stats ? formatCurrency(stats.totalIncome) : "Rp 0"}
               </p>
             </div>
-            <div className="col-span-2 md:col-span-1 bg-gray-900 rounded-2xl p-3.5 flex items-center justify-between md:block">
+            <div className="col-span-2 md:col-span-1 glass rounded-2xl p-3.5 flex items-center justify-between md:block">
               <div>
-                <p className="text-amber-400/70 text-[10px] font-semibold mb-1.5">Saldo</p>
-                <p className={`text-xl font-extrabold ${isSurplus ? "text-amber-400" : "text-red-400"}`}>
+                <p className="text-amber-900/60 text-[10px] font-semibold mb-1.5">Saldo</p>
+                <p className={`text-xl font-extrabold ${isSurplus ? "text-amber-600" : "text-red-600"}`}>
                   {stats ? formatCurrency(stats.balance) : "Rp 0"}
                 </p>
               </div>
               <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                isSurplus ? "bg-amber-400/20 text-amber-400" : "bg-red-400/20 text-red-400"
+                isSurplus ? "bg-amber-500/20 text-amber-700" : "bg-red-500/20 text-red-700"
               }`}>
                 {isSurplus ? "Surplus" : "Defisit"}
               </span>
@@ -160,7 +159,7 @@ export default function DashboardPage() {
       <div className="max-w-5xl mx-auto px-4 pt-5 pb-28 space-y-6">
 
         {/* Tabs */}
-        <div className="bg-white rounded-2xl p-1 flex shadow-sm border border-amber-100 md:max-w-xs">
+        <div className="glass rounded-2xl p-1 flex shadow-lg md:max-w-xs">
           {(["all", "biggest"] as const).map((tab) => (
             <button
               key={tab}
@@ -174,39 +173,34 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ── Testing Section ── */}
-        <div className="mt-6 p-5 rounded-2xl bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-indigo-50/50 border border-blue-100/50 shadow-sm">
-          <TestingSection />
-        </div>
-
         {/* ── Transaction list — setiap item sekarang Link ke detail ── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
+        <div className="glass rounded-2xl overflow-hidden shadow-lg">
           {sortedTransactions.length > 0 ? (
             sortedTransactions.map((tx: Transaction) => (
               <Link
                 key={tx.id}
                 href={`/transactions/${tx.id}`}
-                className="flex items-center px-4 py-3.5 border-b border-amber-50 hover:bg-amber-50/50 active:bg-amber-100/60 transition-colors"
+                className="flex items-center px-4 py-3.5 border-b border-white/20 hover:bg-white/10 active:bg-white/15 transition-colors"
               >
                 {/* info */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-800 truncate">
+                  <p className="font-semibold text-sm text-amber-900 truncate">
                     {tx.category?.name}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-amber-700/60 mt-0.5">
                     {formatShortDate(tx.date)}
                   </p>
                 </div>
 
                 {/* jumlah */}
                 <p className={`font-bold text-sm shrink-0 mr-2 ${
-                  tx.type === "income" ? "text-emerald-600" : "text-gray-800"
+                  tx.type === "income" ? "text-emerald-600" : "text-amber-900"
                 }`}>
                   {tx.type === "income" ? "+" : ""}{formatCurrency(tx.amount)}
                 </p>
 
                 {/* arrow indicator */}
-                <ChevronRightSmall className="w-4 h-4 text-amber-300 shrink-0" />
+                <ChevronRightSmall className="w-4 h-4 text-amber-400 shrink-0" />
               </Link>
             ))
           ) : (

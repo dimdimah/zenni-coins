@@ -211,7 +211,7 @@ export default function ReportsPage() {
 
           {/* Stats cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
+            <div className="glass rounded-2xl p-3.5">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
                 Pemasukan
               </p>
@@ -223,7 +223,7 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
+            <div className="glass rounded-2xl p-3.5">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
                 Pengeluaran
               </p>
@@ -235,17 +235,17 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            <div className="col-span-2 md:col-span-1 bg-gray-900 rounded-2xl p-3.5 border border-gray-800 flex items-center justify-between md:block">
+            <div className="col-span-2 md:col-span-1 glass rounded-2xl p-3.5 flex items-center justify-between md:block">
               <div>
-                <p className="text-amber-400/70 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
+                <p className="text-amber-900/60 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
                   Saldo
                 </p>
-                <p className={`text-xl font-extrabold leading-tight ${isSurplus ? "text-amber-400" : "text-red-400"}`}>
+                <p className={`text-xl font-extrabold leading-tight ${isSurplus ? "text-amber-600" : "text-red-600"}`}>
                   {formatCurrency(balance)}
                 </p>
               </div>
               <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full mt-1 inline-block ${
-                isSurplus ? "bg-amber-400/20 text-amber-400" : "bg-red-400/20 text-red-400"
+                isSurplus ? "bg-amber-500/20 text-amber-700" : "bg-red-500/20 text-red-700"
               }`}>
                 {isSurplus ? "Surplus" : "Defisit"}
               </span>
@@ -263,24 +263,24 @@ export default function ReportsPage() {
             <div className="w-8 h-8 rounded-full border-4 border-amber-400 border-t-transparent animate-spin" />
           </div>
         ) : transactions && transactions.length > 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-amber-100">
+          <div className="glass rounded-2xl shadow-lg overflow-hidden">
 
             {/* Card header */}
-            <div className="px-4 py-3.5 border-b border-amber-50 bg-amber-50/50 flex items-center justify-between">
-              <span className="text-gray-800 font-bold text-sm">
+            <div className="px-4 py-3.5 border-b border-white/20 bg-white/10 flex items-center justify-between">
+              <span className="text-amber-900 font-bold text-sm">
                 Riwayat Transaksi — {monthLabel}
               </span>
-              <span className="text-amber-600 text-xs font-semibold bg-amber-100 px-2.5 py-0.5 rounded-full">
+              <span className="text-amber-700 text-xs font-semibold bg-amber-500/20 px-2.5 py-0.5 rounded-full">
                 {transactions.length} transaksi
               </span>
             </div>
 
             {/* Mobile list */}
-            <div className="divide-y divide-amber-50 md:hidden">
+            <div className="divide-y divide-white/20 md:hidden">
               {transactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-amber-50/40 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/10 transition-colors"
                 >
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
                     tx.type === "income" ? "bg-emerald-100" : "bg-amber-100"
@@ -290,10 +290,10 @@ export default function ReportsPage() {
                       : <TrendingDown className="w-4 h-4 text-amber-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-gray-800 font-semibold text-sm truncate">
+                    <p className="text-amber-900 font-semibold text-sm truncate">
                       {(tx as any).category?.name || "Unknown"}
                     </p>
-                    <p className="text-gray-400 text-xs mt-0.5">
+                    <p className="text-amber-700/60 text-xs mt-0.5">
                       {new Date(tx.date).toLocaleDateString("id-ID", {
                         day: "numeric", month: "short", year: "numeric",
                       })}
@@ -312,22 +312,22 @@ export default function ReportsPage() {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-amber-50/60">
-                    <th className="text-left py-3 px-4 text-xs font-bold text-amber-700/70">Tanggal</th>
-                    <th className="text-left py-3 px-4 text-xs font-bold text-amber-700/70">Kategori</th>
-                    <th className="text-left py-3 px-4 text-xs font-bold text-amber-700/70">Tipe</th>
-                    <th className="text-right py-3 px-4 text-xs font-bold text-amber-700/70">Jumlah</th>
+                  <tr className="bg-white/10">
+                    <th className="text-left py-3 px-4 text-xs font-bold text-amber-900/70">Tanggal</th>
+                    <th className="text-left py-3 px-4 text-xs font-bold text-amber-900/70">Kategori</th>
+                    <th className="text-left py-3 px-4 text-xs font-bold text-amber-900/70">Tipe</th>
+                    <th className="text-right py-3 px-4 text-xs font-bold text-amber-900/70">Jumlah</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-amber-50">
+                <tbody className="divide-y divide-white/20">
                   {transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-amber-50/30 transition-colors">
-                      <td className="py-3.5 px-4 text-gray-500 text-xs">
+                    <tr key={tx.id} className="hover:bg-white/10 transition-colors">
+                      <td className="py-3.5 px-4 text-amber-700/60 text-xs">
                         {new Date(tx.date).toLocaleDateString("id-ID", {
                           day: "numeric", month: "long", year: "numeric",
                         })}
                       </td>
-                      <td className="py-3.5 px-4 text-gray-800 font-semibold text-xs">
+                      <td className="py-3.5 px-4 text-amber-900 font-semibold text-xs">
                         {(tx as any).category?.name || "Unknown"}
                       </td>
                       <td className="py-3.5 px-4">

@@ -134,7 +134,7 @@ export default function CategoriesPage() {
 
           {/* Stats cards */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
+            <div className="glass rounded-2xl p-3.5">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
                 Pengeluaran
               </p>
@@ -143,7 +143,7 @@ export default function CategoriesPage() {
               </p>
               <p className="text-amber-900/50 text-[10px] mt-1">kategori</p>
             </div>
-            <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-3.5 border border-white/40">
+            <div className="glass rounded-2xl p-3.5">
               <p className="text-amber-900/60 text-[10px] font-semibold uppercase tracking-wide mb-1.5">
                 Pemasukan
               </p>
@@ -161,7 +161,7 @@ export default function CategoriesPage() {
       ══════════════════════════════════════════ */}
       <div className="max-w-5xl mx-auto px-4 pt-5 pb-28 md:pb-10 space-y-4">
         {/* Tab toggle */}
-        <div className="bg-white rounded-2xl p-1 flex shadow-sm border border-amber-100 md:max-w-xs">
+        <div className="glass rounded-2xl p-1 flex shadow-lg md:max-w-xs">
           {(["expense", "income"] as const).map((tab) => (
             <button
               key={tab}
@@ -203,7 +203,7 @@ export default function CategoriesPage() {
             })}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-amber-100">
+          <div className="glass rounded-2xl p-12 text-center shadow-lg">
             <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
               <Tag className="w-7 h-7 text-amber-500" />
             </div>
@@ -230,7 +230,7 @@ export default function CategoriesPage() {
             if (e.target === e.currentTarget) setEditingCategory(null);
           }}
         >
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 mb-2 md:mb-0">
+          <div className="glass rounded-3xl shadow-2xl w-full max-w-md p-6 mb-2 md:mb-0">
             {/* Modal header */}
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-extrabold text-gray-900">

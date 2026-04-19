@@ -113,19 +113,19 @@ export default function BudgetsPage() {
             {budgetsWithStatus.map((budget) => (
               <div
                 key={budget.id}
-                className={`bg-white rounded-2xl p-4 shadow-sm border ${
+                className={`glass rounded-2xl p-4 shadow-lg ${
                   budget.isExceeded
-                    ? "border-red-200"
-                    : "border-amber-100"
+                    ? "border-red-200/50"
+                    : "border-white/60"
                 }`}
               >
                 {/* HEADER */}
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-gray-800 font-bold text-sm">
+                  <p className="text-amber-900 font-bold text-sm">
                     {budget.category?.name}
                   </p>
 
-                  <button className="w-8 h-8 rounded-lg bg-amber-50 hover:bg-amber-100 flex items-center justify-center transition">
+                  <button className="w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
                     <Trash2 className="w-4 h-4 text-amber-600" />
                   </button>
                 </div>
@@ -163,7 +163,7 @@ export default function BudgetsPage() {
                 </div>
 
                 {/* FOOTER */}
-                <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-amber-100">
+                <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-white/20">
                   <div>
                     <p className="text-[10px] text-gray-400">Sisa</p>
                     <p
@@ -188,7 +188,7 @@ export default function BudgetsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-amber-100">
+          <div className="glass rounded-2xl p-12 text-center shadow-lg">
             <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
               💰
             </div>
