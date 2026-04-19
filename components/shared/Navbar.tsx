@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Search,
   House,
+  Zap,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -35,6 +36,7 @@ const NAV_ITEMS_LEFT = [
 const NAV_ITEMS_RIGHT = [
   { href: "/categories", label: "Kategori", icon: Tag },
   { href: "/reports", label: "Laporan", icon: ReceiptText  },
+  { href: "/tests", label: "Tests", icon: Zap },
 ];
 
 const ALL_NAV_ITEMS = [...NAV_ITEMS_LEFT, ...NAV_ITEMS_RIGHT];

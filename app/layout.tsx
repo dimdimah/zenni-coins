@@ -9,9 +9,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FinFlow - Manajemen Keuangan Pribadi",
+  title: "FinFlow - Manajemen Keuangan & Testing Platform",
   description:
-    "Aplikasi manajemen keuangan pribadi yang mudah dan intuitif dengan fitur tracking, budgeting, dan laporan keuangan",
+    "Aplikasi manajemen keuangan pribadi dan platform testing dengan fitur tracking, budgeting, laporan keuangan, serta pembuatan dan grading tes secara real-time",
   generator: "finflow v1.0.0",
   icons: {
     icon: [
