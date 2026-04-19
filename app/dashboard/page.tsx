@@ -9,6 +9,7 @@ import Link from "next/link";
 import { formatCurrency, formatShortDate } from "@/lib/utils/formatting";
 import { DashboardStats, Transaction } from "@/lib/types";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { TestingSection } from "@/components/dashboard/TestingSection";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -156,7 +157,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── CONTENT ── */}
-      <div className="max-w-5xl mx-auto px-4 pt-5 pb-28 space-y-4">
+      <div className="max-w-5xl mx-auto px-4 pt-5 pb-28 space-y-6">
 
         {/* Tabs */}
         <div className="bg-white rounded-2xl p-1 flex shadow-sm border border-amber-100 md:max-w-xs">
@@ -171,6 +172,11 @@ export default function DashboardPage() {
               {tab === "all" ? "Semua Transaksi" : "Transaksi Terbesar"}
             </button>
           ))}
+        </div>
+
+        {/* ── Testing Section ── */}
+        <div className="mt-6 p-5 rounded-2xl bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-indigo-50/50 border border-blue-100/50 shadow-sm">
+          <TestingSection />
         </div>
 
         {/* ── Transaction list — setiap item sekarang Link ke detail ── */}
