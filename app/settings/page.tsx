@@ -3,16 +3,20 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Loader2,
+  ShieldAlert,
+  User,
+} from "lucide-react";
 
 export default function SettingsPage() {
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -24,19 +28,12 @@ export default function SettingsPage() {
       try {
         const supabase = createClient();
         const { data } = await supabase.auth.getUser();
-
-        if (!data?.user) {
-          router.push("/auth/login");
-        } else {
-          setUser({ email: data.user.email || "" });
-        }
-      } catch {
-        router.push("/auth/login");
+        if (!data?.user) router.push("/auth/login");
+        else setUser({ email: data.user.email || "" });
       } finally {
         setIsLoading(false);
       }
     };
-
     checkUser();
   }, [router]);
 
@@ -44,28 +41,25 @@ export default function SettingsPage() {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      toast({
+      return toast({
         title: "Error",
         description: "Password tidak cocok",
         variant: "destructive",
       });
-      return;
     }
 
     if (newPassword.length < 6) {
-      toast({
+      return toast({
         title: "Error",
         description: "Minimal 6 karakter",
         variant: "destructive",
       });
-      return;
     }
 
     setIsChangingPassword(true);
 
     try {
       const supabase = createClient();
-
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -92,13 +86,8 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-amber-50">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-amber-700 text-sm font-medium">
-            Memuat pengaturan...
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
       </div>
     );
   }
@@ -108,111 +97,120 @@ export default function SettingsPage() {
   const username = user.email.split("@")[0];
 
   return (
-    <div className="min-h-screen bg-amber-50">
-      {/* HEADER */}
-      <div
-        className="px-5 pt-7 pb-8 md:rounded-b-3xl"
-        style={{
-          background:
-            "linear-gradient(135deg, #F5A623 0%, #F7B733 60%, #FCCD5A 100%)",
-        }}
-      >
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-gray-900 text-xl font-extrabold">
-            Pengaturan
-          </h1>
-          <p className="text-amber-900/60 text-xs mt-1">
-            Kelola akun kamu, {username}
-          </p>
+    <div className="min-h-screen bg-gray-50">
+
+      {/* ===== HEADER ===== */}
+      <div className="bg-white border-b">
+        <div className="max-w-2xl mx-auto px-4 py-6">
+
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+              <User className="w-5 h-5 text-amber-600" />
+            </div>
+
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                {username}
+              </h1>
+              <p className="text-xs text-gray-500">
+                Pengaturan akun
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* CONTENT */}
-      <div className="max-w-2xl mx-auto px-4 pt-5 pb-24 space-y-4">
-        {/* ACCOUNT CARD */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
-          <p className="text-gray-800 font-bold text-sm mb-3">
+      {/* ===== CONTENT ===== */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+
+        {/* ACCOUNT */}
+        <div className="bg-white border rounded-2xl p-5">
+          <p className="text-sm font-semibold text-gray-900 mb-3">
             Informasi Akun
           </p>
 
-          <div className="flex items-center gap-3 bg-amber-50 rounded-xl p-3 border border-amber-100">
-            <Mail className="w-4 h-4 text-amber-600" />
-            <span className="text-gray-800 text-sm font-semibold truncate">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border">
+            <Mail className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-700 truncate">
               {user.email}
             </span>
           </div>
         </div>
 
-        {/* PASSWORD CARD */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
-          <p className="text-gray-800 font-bold text-sm mb-3">
+        {/* PASSWORD */}
+        <div className="bg-white border rounded-2xl p-5">
+          <p className="text-sm font-semibold text-gray-900 mb-4">
             Ubah Password
           </p>
 
           <form onSubmit={handleChangePassword} className="space-y-3">
-            {/* NEW PASSWORD */}
+
             <div>
-              <label className="text-xs font-bold text-gray-700 mb-1 block uppercase">
+              <label className="text-xs text-gray-500 mb-1 block">
                 Password Baru
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="pl-10 bg-amber-50 border-amber-200 focus:ring-amber-400"
-                  placeholder="••••••••"
+                  className="pl-10"
                 />
               </div>
             </div>
 
-            {/* CONFIRM PASSWORD */}
             <div>
-              <label className="text-xs font-bold text-gray-700 mb-1 block uppercase">
+              <label className="text-xs text-gray-500 mb-1 block">
                 Konfirmasi Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 bg-amber-50 border-amber-200 focus:ring-amber-400"
-                  placeholder="••••••••"
+                  className="pl-10"
                 />
               </div>
             </div>
 
-            <Button
+            <button
               type="submit"
               disabled={isChangingPassword}
-              className="w-full bg-gray-900 text-amber-400 hover:bg-gray-800 font-bold rounded-xl"
+              className="w-full mt-2 bg-amber-400 text-black text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 hover:opacity-90"
             >
               {isChangingPassword && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               )}
               {isChangingPassword ? "Menyimpan..." : "Simpan Password"}
-            </Button>
+            </button>
+
           </form>
         </div>
 
-        {/* DANGER ZONE */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-red-200">
-          <p className="text-red-500 font-bold text-sm mb-2">
-            Zona Berbahaya
-          </p>
-          <p className="text-gray-400 text-xs mb-3">
+        {/* DANGER */}
+        <div className="bg-white border border-red-200 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldAlert className="w-4 h-4 text-red-500" />
+            <p className="text-sm font-semibold text-red-500">
+              Zona Berbahaya
+            </p>
+          </div>
+
+          <p className="text-xs text-gray-500 mb-4">
             Tindakan ini tidak dapat dibatalkan
           </p>
 
-          <Button
+          <button
             disabled
-            className="w-full bg-red-500 text-white hover:bg-red-600 rounded-xl font-bold"
+            className="w-full py-2.5 text-sm font-semibold rounded-lg bg-red-500 text-white opacity-60 cursor-not-allowed"
           >
             Hapus Akun (Coming Soon)
-          </Button>
+          </button>
         </div>
+
       </div>
     </div>
   );

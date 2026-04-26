@@ -56,4 +56,11 @@ export type DashboardStats = {
     percentage: number;
   }>;
   recentTransactions: Transaction[];
+  chartData: ChartData[];
+};
+
+export type ChartData = {
+  name: string;
+  income: number;
+  expense: number;
 };

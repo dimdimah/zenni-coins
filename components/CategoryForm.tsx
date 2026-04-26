@@ -5,7 +5,6 @@ import { mutate } from "swr";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -14,68 +13,36 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2 } from "lucide-react";
 
 const COLORS = [
-  "#F5A623", "#1A8A5A", "#2471A3", "#E05C2A",
-  "#8B5CF6", "#EF4444", "#14B8A6", "#F97316",
+  "#F87171", "#FB923C", "#FACC15", "#4ADE80",
+  "#22C55E", "#38BDF8", "#6366F1", "#A855F7",
 ];
 
-export function CategoryForm({
-  trigger,
-}: {
-  trigger?: React.ReactNode;
-}) {
+export function CategoryForm({ trigger }: { trigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    type: "expense",
-    color: COLORS[0],
-  });
+  const [formData, setFormData] = useState({ name: "", type: "expense", color: COLORS[0] });
 
   const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     if (!formData.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Nama kategori wajib diisi",
-        variant: "destructive",
-      });
-      return;
+      return toast({ title: "Error", description: "Nama kategori wajib diisi", variant: "destructive" });
     }
-
     setIsLoading(true);
-
     try {
       const res = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       if (!res.ok) throw new Error();
-
-      toast({
-        title: "Berhasil",
-        description: "Kategori berhasil ditambahkan",
-      });
-
-      setFormData({
-        name: "",
-        type: "expense",
-        color: COLORS[0],
-      });
-
+      toast({ title: "Berhasil", description: "Kategori berhasil ditambahkan" });
+      setFormData({ name: "", type: "expense", color: COLORS[0] });
       setOpen(false);
       mutate("/api/categories");
     } catch {
-      toast({
-        title: "Error",
-        description: "Gagal menambahkan kategori",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Gagal menambahkan kategori", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -84,87 +51,71 @@ export function CategoryForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger ? (
-          trigger
-        ) : (
-          <button className="px-4 py-2 rounded-xl bg-gray-900 text-amber-400 text-xs font-bold hover:bg-gray-800 transition flex items-center gap-2">
+        {trigger ?? (
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold transition hover:bg-amber-300 active:scale-95">
             <Plus className="w-4 h-4" />
-            Tambah
+            Kategori
           </button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="rounded-3xl p-0 overflow-hidden max-w-md">
-        {/* HEADER */}
-        <div className="px-5 pt-5 pb-4 border-b border-amber-100 bg-amber-50/50">
-          <DialogTitle className="text-sm font-extrabold text-gray-900">
+      <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden border border-gray-200 shadow-lg bg-white">
+
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+          <DialogTitle className="text-base font-semibold text-gray-900">
             Tambah Kategori
           </DialogTitle>
-          <p className="text-xs text-amber-900/60 mt-1">
-            Buat kategori baru untuk mengorganisir transaksi
-          </p>
         </div>
 
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
 
-          {/* TYPE */}
-          <div>
-            <p className="text-[10px] font-bold text-gray-700 mb-1 uppercase">
-              Tipe
-            </p>
-            <div className="flex rounded-xl overflow-hidden border border-amber-200 bg-amber-50">
-              {(["expense", "income"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, type: t })}
-                  className={`flex-1 py-2.5 text-xs font-bold transition-colors ${
-                    formData.type === t
-                      ? t === "expense"
-                        ? "bg-gray-900 text-amber-400"
-                        : "bg-emerald-600 text-white"
-                      : "text-amber-700/60 hover:text-amber-800"
+          {/* TYPE TOGGLE */}
+          <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
+            {(["expense", "income"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setFormData({ ...formData, type: t })}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all
+                  ${formData.type === t
+                    ? "bg-amber-400 text-black"
+                    : "text-gray-500"
                   }`}
-                >
-                  {t === "expense" ? "Pengeluaran" : "Pemasukan"}
-                </button>
-              ))}
-            </div>
+              >
+                {t === "expense" ? "Pengeluaran" : "Pemasukan"}
+              </button>
+            ))}
           </div>
 
           {/* NAME */}
           <div>
-            <p className="text-[10px] font-bold text-gray-700 mb-1 uppercase">
-              Nama Kategori
-            </p>
+            <p className="text-xs text-gray-500 mb-1.5">Nama Kategori</p>
             <Input
               placeholder="Contoh: Makanan"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="bg-amber-50/30 border-amber-200 focus:ring-amber-400 text-sm"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="border-gray-200 rounded-lg focus-visible:ring-amber-400 bg-white text-sm"
             />
           </div>
 
-          {/* COLOR */}
+          {/* COLOR PICKER */}
           <div>
-            <p className="text-[10px] font-bold text-gray-700 mb-1 uppercase">
-              Warna
-            </p>
+            <p className="text-xs text-gray-500 mb-2">Warna</p>
             <div className="grid grid-cols-4 gap-2">
               {COLORS.map((color) => (
                 <button
                   key={color}
                   type="button"
                   onClick={() => setFormData({ ...formData, color })}
-                  className={`w-full h-10 rounded-xl transition-transform hover:scale-105 ${
-                    formData.color === color
-                      ? "ring-2 ring-offset-2 ring-gray-900 scale-105"
-                      : ""
-                  }`}
-                  style={{ backgroundColor: color }}
+                  className="h-10 rounded-lg transition-all"
+                  style={{
+                    backgroundColor: color,
+                    outline: formData.color === color ? "2px solid #f59e0b" : "none",
+                    outlineOffset: "2px",
+                    transform: formData.color === color ? "scale(1.05)" : "scale(1)",
+                    opacity: formData.color === color ? 1 : 0.7,
+                  }}
                 />
               ))}
             </div>
@@ -174,10 +125,10 @@ export function CategoryForm({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 text-sm bg-gray-900 text-amber-400 rounded-xl hover:bg-gray-800 font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-black text-sm font-semibold flex items-center justify-center gap-2 transition active:scale-95 disabled:opacity-60"
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isLoading ? "Menyimpan..." : "Tambah Kategori"}
+            {isLoading ? "Menyimpan..." : "Simpan"}
           </button>
         </form>
       </DialogContent>

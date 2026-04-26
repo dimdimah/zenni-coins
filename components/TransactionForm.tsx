@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Category } from "@/lib/types";
 import { Delete, CheckCheck, Calendar } from "lucide-react";
 import { ReceiptScanner, ScanResult } from "./ReceiptScanner";
+import { motion, AnimatePresence } from "framer-motion";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -84,34 +85,25 @@ export default function TransactionFormContent({
   };
 
   const handleScanComplete = (result: ScanResult) => {
-    if (result.amount && result.amount !== "0") {
-      setAmount(result.amount);
-    }
-
-    if (result.date) {
-      setDate(result.date);
-    }
-
+    if (result.amount && result.amount !== "0") setAmount(result.amount);
+    if (result.date) setDate(result.date);
     const notesText = [result.merchant, result.notes]
       .filter(Boolean)
       .join(" — ");
     if (notesText) setNotes(notesText);
-
     if (result.category && categories) {
       const matched = categories.find(
         (c) =>
           c.type === "expense" &&
-          c.name.toLowerCase().includes(result.category.toLowerCase())
+          c.name.toLowerCase().includes(result.category.toLowerCase()),
       );
       if (matched) {
         setCategoryId(matched.id);
         setType("expense");
       }
     }
-
     setScanHighlight(true);
     setTimeout(() => setScanHighlight(false), 1500);
-
     toast.success("Struk berhasil dibaca! 🎉", {
       description: `Rp ${parseInt(result.amount || "0").toLocaleString("id-ID")} dari ${result.merchant || "merchant"}`,
     });
@@ -119,16 +111,12 @@ export default function TransactionFormContent({
 
   const handleSubmit = async () => {
     if (!categoryId || !amount || amount === "0") {
-      toast.error("Lengkapi form dulu ya!", {
+      return toast.error("Lengkapi form dulu ya!", {
         description: "Pilih kategori dan masukkan jumlah",
       });
-      return;
     }
-
     setIsLoading(true);
-
     const toastId = toast.loading("Menyimpan transaksi...");
-
     try {
       const res = await fetch("/api/transactions", {
         method: "POST",
@@ -141,14 +129,11 @@ export default function TransactionFormContent({
           date,
         }),
       });
-
       if (!res.ok) throw new Error();
-
       toast.success("Transaksi ditambahkan! ✅", {
         id: toastId,
         description: `Rp ${formatRupiah(amount)} berhasil disimpan`,
       });
-
       setAmount("0");
       setCategoryId("");
       setNotes("");
@@ -178,11 +163,14 @@ export default function TransactionFormContent({
   return (
     <div
       className={`flex flex-col gap-3 px-4 pb-6 overflow-y-auto transition-all duration-300 ${
-        scanHighlight ? "bg-emerald-50/60 rounded-2xl" : ""
+        scanHighlight ? "bg-emerald-50/40 rounded-2xl" : ""
       }`}
     >
       {/* TYPE TOGGLE */}
-      <div className="flex rounded-xl overflow-hidden border border-slate-200">
+      <div
+        className="flex p-1 rounded-xl gap-1"
+        style={{ background: "rgba(0,0,0,0.05)" }}
+      >
         {(["expense", "income"] as const).map((t) => (
           <button
             key={t}
@@ -190,13 +178,19 @@ export default function TransactionFormContent({
               setType(t);
               setCategoryId("");
             }}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+            className="flex-1 py-2.5 text-xs font-semibold rounded-lg transition-all"
+            style={
               type === t
-                ? t === "expense"
-                  ? "bg-red-500 text-white"
-                  : "bg-emerald-500 text-white"
-                : "bg-white text-slate-500"
-            }`}
+                ? {
+                    background:
+                      t === "expense"
+                        ? "linear-gradient(135deg, #ef4444, #f87171)"
+                        : "linear-gradient(135deg, #059669, #34d399)",
+                    color: "#fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                  }
+                : { color: "#6b7280" }
+            }
           >
             {t === "expense" ? "Pengeluaran" : "Pemasukan"}
           </button>
@@ -204,35 +198,66 @@ export default function TransactionFormContent({
       </div>
 
       {/* AMOUNT */}
-      <div className={`text-center py-1 rounded-xl transition-all ${scanHighlight ? "bg-emerald-100/60" : ""}`}>
-        <p className="text-slate-400 text-xs mb-0.5">Rp</p>
-        <p className="text-4xl font-bold text-slate-900 tracking-tight">
-          {formatRupiah(amount)}
-        </p>
+      <div
+        className={`text-center py-2 rounded-2xl transition-all ${scanHighlight ? "bg-emerald-50" : ""}`}
+        style={{
+          background: scanHighlight ? undefined : "rgba(99,102,241,0.04)",
+        }}
+      >
+        <p className="text-gray-400 text-xs mb-0.5">Rp</p>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={amount}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 1.2, opacity: 0 }}
+            transition={{
+              duration: 0.2,
+              ease: "easeOut",
+            }}
+            className="text-4xl font-bold text-gray-900 tracking-tight tabular-nums"
+          >
+            {formatRupiah(amount)}
+          </motion.p>
+        </AnimatePresence>
       </div>
 
       {/* CATEGORY SCROLL */}
-      <div className="overflow-x-auto pb-2 -mx-4 px-4">
+      <div className="overflow-x-auto pb-1 -mx-4 px-4">
         <div className="flex gap-2 w-max">
           {visibleCategories.length > 0 ? (
             visibleCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setCategoryId(cat.id)}
-                className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl border-2 transition-all ${
+                className="shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all"
+                style={
                   categoryId === cat.id
-                    ? "border-[#0F172A] bg-slate-100"
-                    : "border-slate-200 bg-white"
-                }`}
+                    ? {
+                        background: "rgba(99,102,241,0.12)",
+                        border: "1.5px solid rgba(99,102,241,0.4)",
+                      }
+                    : {
+                        background: "rgba(255,255,255,0.55)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(255,255,255,0.75)",
+                      }
+                }
               >
                 <span className="text-xl">{getCategoryIcon(cat.name)}</span>
-                <span className="text-[10px] text-slate-600 w-13 text-center leading-tight truncate">
+                <span
+                  className="text-[10px] w-13 text-center leading-tight truncate"
+                  style={{
+                    color: categoryId === cat.id ? "#6366f1" : "#6b7280",
+                    fontWeight: categoryId === cat.id ? 600 : 400,
+                  }}
+                >
                   {cat.name}
                 </span>
               </button>
             ))
           ) : (
-            <p className="text-slate-400 text-xs py-1">Belum ada kategori</p>
+            <p className="text-gray-400 text-xs py-1">Belum ada kategori</p>
           )}
         </div>
       </div>
@@ -241,7 +266,12 @@ export default function TransactionFormContent({
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowDatePicker((v) => !v)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition"
+          style={{
+            background: "rgba(99,102,241,0.08)",
+            color: "#6366f1",
+            border: "1px solid rgba(99,102,241,0.15)",
+          }}
         >
           <Calendar className="w-3.5 h-3.5" />
           {formatDateLabel(date)}
@@ -254,7 +284,11 @@ export default function TransactionFormContent({
               setDate(e.target.value);
               setShowDatePicker(false);
             }}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 bg-white"
+            className="text-xs border rounded-xl px-2 py-1.5 text-gray-700 outline-none"
+            style={{
+              borderColor: "rgba(99,102,241,0.3)",
+              background: "rgba(255,255,255,0.7)",
+            }}
           />
         )}
         <input
@@ -262,7 +296,12 @@ export default function TransactionFormContent({
           placeholder="Notes..."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="flex-1 text-xs bg-slate-100 rounded-lg px-3 py-1.5 outline-none text-slate-700 placeholder:text-slate-400 min-w-0"
+          className="flex-1 text-xs rounded-xl px-3 py-1.5 outline-none min-w-0"
+          style={{
+            background: "rgba(255,255,255,0.55)",
+            border: "1px solid rgba(255,255,255,0.75)",
+            color: "#374151",
+          }}
         />
       </div>
 
@@ -281,8 +320,13 @@ export default function TransactionFormContent({
                   key="confirm"
                   onClick={handleSubmit}
                   disabled={isLoading}
-                  style={{ gridRow: "span 2" }}
-                  className="bg-[#0F172A] rounded-2xl flex items-center justify-center text-white hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50"
+                  style={{
+                    gridRow: "span 2",
+                    background:
+                      "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    boxShadow: "0 4px 14px rgba(99,102,241,0.4)",
+                  }}
+                  className="rounded-2xl flex items-center justify-center text-white active:scale-95 transition-all disabled:opacity-50"
                 >
                   <CheckCheck className="w-5 h-5" />
                 </button>
@@ -293,15 +337,21 @@ export default function TransactionFormContent({
               <button
                 key={`${ri}-${ki}`}
                 onClick={() => handleNumpad(key)}
-                className={`h-12 rounded-2xl flex items-center justify-center font-semibold text-sm transition-all active:scale-95
-                  ${
-                    isAC
-                      ? "bg-red-100 text-red-500 hover:bg-red-200"
-                      : isOp || isBack
-                        ? "bg-slate-200 text-slate-600 hover:bg-slate-300"
-                        : "bg-slate-100 text-slate-800 hover:bg-slate-200"
-                  }
-                `}
+                className="h-12 rounded-2xl flex items-center justify-center font-semibold text-sm transition-all active:scale-95"
+                style={
+                  isAC
+                    ? { background: "rgba(239,68,68,0.1)", color: "#ef4444" }
+                    : isOp || isBack
+                      ? {
+                          background: "rgba(99,102,241,0.08)",
+                          color: "#6366f1",
+                        }
+                      : {
+                          background: "rgba(255,255,255,0.6)",
+                          color: "#1f2937",
+                          backdropFilter: "blur(8px)",
+                        }
+                }
               >
                 {isBack ? <Delete className="w-4 h-4" /> : key}
               </button>
